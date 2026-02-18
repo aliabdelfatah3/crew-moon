@@ -4,7 +4,7 @@ export const heroData = {
   description:
     "Crew Moon is a leading production company specializing in commercials, television, feature films, new media, and AI content production.",
   cta: "The Crew is Ready",
-  videoSrc: "./assets/video/herosection.mp4",
+  videoSrc: "/video/herosection.mp4",
 };
 
 export const aboutData = {
