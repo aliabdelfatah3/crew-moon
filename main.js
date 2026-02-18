@@ -34,12 +34,16 @@ mobileMenu.querySelectorAll("a").forEach((link) => {
 $(document).ready(function () {
   renderProject();
   initInteractions();
+  initLazyLoading();
 });
 
 function renderProject() {
   // Render Hero
-  $("#hero-video source").attr("src", heroData.videoSrc);
-  $("#hero-video")[0].load();
+  const heroVideo = $("#hero-video")[0];
+  // Use data attribute for lazy loading
+  heroVideo.dataset.src = heroData.videoSrc;
+  loadVideoLazy(heroVideo);
+
   $("#hero-title").text(heroData.title);
   $("#hero-subtitle").html(
     heroData.subtitle.replace(
@@ -56,15 +60,21 @@ function renderProject() {
     `${aboutData.title.split("creative")[0]} <span class="text-slate-500">creative solutions.</span>`,
   );
   $("#about-description").text(aboutData.description);
-  $("#about-main-image").attr("src", aboutData.mainImage);
 
-  // Render Image Strip
+  // Lazy load main image
+  const aboutImg = $("#about-main-image")[0];
+  if (aboutImg) {
+    aboutImg.dataset.src = aboutData.mainImage;
+    aboutImg.classList.add("lazy-img");
+  }
+
+  // Render Image Strip - with lazy loading
   const stripHtml = aboutData.imageStrip
     .map(
       (img) => `
         <div class="min-w-62.5 aspect-3/4 overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 ${img.special === "red" ? "bg-red-900/40 relative" : "bg-slate-800"}">
             ${img.special === "red" ? '<div class="absolute inset-0 bg-red-600/20 mix-blend-multiply"></div>' : ""}
-            <img src="${img.src}" alt="${img.alt}" class="w-full h-full object-cover">
+            <img src="" data-src="${img.src}" alt="${img.alt}" class="w-full h-full object-cover lazy-img">
         </div>
     `,
     )
@@ -82,7 +92,7 @@ function renderProject() {
         <div class="group relative bg-slate-900/50 rounded-2xl overflow-hidden border border-white/5 hover:border-blue-500/30 reveal opacity-0 translate-y-10 transition-all duration-1000 ${index % 2 !== 0 ? "delay-200" : ""}">
             <div class="aspect-video relative overflow-hidden">
                 <div class="absolute inset-0 bg-slate-800 flex items-center justify-center">
-                    <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60">
+                    <img src="" data-src="${item.image}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60 lazy-img">
                     <div class="absolute inset-0 bg-linear-to-t from-slate-950 to-transparent"></div>
                 </div>
                 <div class="absolute bottom-6 left-6 flex items-center gap-3">
@@ -100,47 +110,12 @@ function renderProject() {
     .join("");
   $("#services-grid").html(servicesHtml);
 
-  // Render Showreel
-  //   console.log("Showreel Data:", showreelData);
+  // Render Showreel - LAZY LOAD (don't load until in viewport)
   const $showreelVideo = $("#showreel-video");
   if ($showreelVideo.length) {
-    const video = $showreelVideo[0];
-
-    // Ensure proper attributes for autoplay
-    $(video).attr({
-      autoplay: "",
-      muted: "",
-      loop: "",
-      playsinline: "",
-      preload: "auto",
-    });
-
-    // Set src and load
-    video.src = showreelData.videoSrc;
-    video.load();
-
-    // Attempt play
-    const playPromise = video.play();
-    if (playPromise !== undefined) {
-      playPromise.catch((error) => {
-        console.warn(
-          "Showreel autoplay blocked. Waiting for interaction.",
-          error,
-        );
-
-        // Fallback for strict browsers
-        const handleInteraction = () => {
-          video
-            .play()
-            .then(() => {
-              console.log("Showreel playing after interaction");
-              $(document).off("click scroll touchend", handleInteraction);
-            })
-            .catch((err) => console.error("Still cannot play video:", err));
-        };
-        $(document).on("click scroll touchend", handleInteraction);
-      });
-    }
+    // Store src as data attribute for lazy loading
+    $showreelVideo[0].dataset.src = showreelData.videoSrc;
+    $showreelVideo[0].dataset.needsLoad = true;
   }
 
   $("#showreel-title").text(showreelData.title);
@@ -153,7 +128,7 @@ function renderProject() {
     .map(
       (logo) => `
         <div class="w-32 md:w-48 h-12 shrink-0 brightness-0 invert opacity-40 hover:invert-0 hover:brightness-100 hover:opacity-100 transition-all duration-500">
-            <img src="${logo.src}" alt="${logo.name}" class="w-full h-full object-contain">
+            <img src="" data-src="${logo.src}" alt="${logo.name}" class="w-full h-full object-contain lazy-img">
         </div>
     `,
     )
@@ -171,7 +146,7 @@ function renderProject() {
       (logo, index) => `
         <div class="relative preserve-3d animate-float-logo" style="animation-delay: ${index * 0.5}s">
             <div class="w-32 md:w-44 h-12 shrink-0">
-                <img src="${logo.src}" alt="${logo.name}" class="w-full h-full object-contain filter brightness-0 invert opacity-100">
+                <img src="" data-src="${logo.src}" alt="${logo.name}" class="w-full h-full object-contain filter brightness-0 invert opacity-100 lazy-img">
             </div>
         </div>
     `,
@@ -344,4 +319,85 @@ function initInteractions() {
     transition: "transform 0.3s cubic-bezier(0.23, 1, 0.32, 1)",
     display: "inline-block",
   });
+}
+
+// LAZY LOADING FUNCTIONS
+function initLazyLoading() {
+  // Lazy load images with Intersection Observer
+  const imageObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          const src = img.dataset.src;
+          if (src) {
+            img.src = src;
+            img.removeAttribute("data-src");
+            imageObserver.unobserve(img);
+          }
+        }
+      });
+    },
+    { rootMargin: "50px" },
+  );
+
+  // Observe all lazy images
+  document
+    .querySelectorAll(".lazy-img")
+    .forEach((img) => imageObserver.observe(img));
+
+  // Lazy load video sections
+  const videoObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const video = entry.target;
+        if (entry.isIntersecting && video.dataset.needsLoad === "true") {
+          loadVideoLazy(video);
+          video.dataset.needsLoad = false;
+          videoObserver.unobserve(video);
+        }
+      });
+    },
+    { rootMargin: "100px" },
+  );
+
+  // Observe showreel video
+  const showreelVideo = document.getElementById("showreel-video");
+  if (showreelVideo && showreelVideo.dataset.needsLoad) {
+    videoObserver.observe(showreelVideo);
+  }
+}
+
+function loadVideoLazy(videoElement) {
+  const src = videoElement.dataset.src;
+  if (src) {
+    videoElement.src = src;
+    videoElement.load();
+
+    // For showreel, handle autoplay
+    if (videoElement.id === "showreel-video") {
+      videoElement.setAttribute("autoplay", "");
+      videoElement.setAttribute("muted", "");
+      videoElement.setAttribute("loop", "");
+      videoElement.setAttribute("playsinline", "");
+
+      const playPromise = videoElement.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.warn("Autoplay blocked. Waiting for interaction.", error);
+
+          const handleInteraction = () => {
+            videoElement
+              .play()
+              .then(() => {
+                console.log("Video playing after interaction");
+                $(document).off("click scroll touchend", handleInteraction);
+              })
+              .catch((err) => console.error("Cannot play video:", err));
+          };
+          $(document).on("click scroll touchend", handleInteraction);
+        });
+      }
+    }
+  }
 }
