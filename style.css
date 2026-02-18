@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #3b82f6;
+  --font-sans: "Outfit", sans-serif;
+}
+
+/* Custom 3D Utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Base styles for smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-reverse {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-marquee-reverse {
+  display: flex;
+  width: max-content;
+  animation: marquee-reverse 50s linear infinite;
+}
+
+.animate-marquee-reverse:hover {
+  animation-play-state: paused;
+}
+
+/* Isometric 3D Marquee */
+.isometric-wall {
+  transform: rotateX(20deg) rotateY(-20deg) rotateZ(10deg);
+  transform-style: preserve-3d;
+  display: flex;
+  width: max-content;
+}
+
+@keyframes isometric-marquee {
+  0% {
+    transform: rotateX(20deg) rotateY(-20deg) rotateZ(10deg) translateX(0);
+  }
+  100% {
+    transform: rotateX(20deg) rotateY(-20deg) rotateZ(10deg) translateX(-50%);
+  }
+}
+
+.animate-isometric-marquee {
+  animation: isometric-marquee 60s linear infinite;
+}
+
+@keyframes float-logo {
+  0%,
+  100% {
+    transform: translateZ(20px) translateY(0);
+  }
+  50% {
+    transform: translateZ(50px) translateY(-10px);
+  }
+}
+
+.animate-float-logo {
+  animation: float-logo 4s ease-in-out infinite;
+}
+
+/* Cinematic Ambient Spotlight */
+.ambient-spotlight {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(
+    circle,
+    rgba(59, 130, 246, 0.12) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 1;
+  transform: translate(-50%, -50%);
+  will-change: transform;
+}
