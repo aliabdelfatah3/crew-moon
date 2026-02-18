@@ -42,7 +42,7 @@ function renderProject() {
   const heroVideo = $("#hero-video")[0];
   // Use data attribute for lazy loading
   heroVideo.dataset.src = heroData.videoSrc;
-  loadVideoLazy(heroVideo);
+  heroVideo.dataset.needsLoad = true;
 
   $("#hero-title").text(heroData.title);
   $("#hero-subtitle").html(
@@ -365,6 +365,12 @@ function initLazyLoading() {
   const showreelVideo = document.getElementById("showreel-video");
   if (showreelVideo && showreelVideo.dataset.needsLoad) {
     videoObserver.observe(showreelVideo);
+  }
+
+  // Observe hero video
+  const heroVideo = document.getElementById("hero-video");
+  if (heroVideo && heroVideo.dataset.needsLoad === "true") {
+    videoObserver.observe(heroVideo);
   }
 }
 
